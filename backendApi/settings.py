@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.users',
     'apps.items',
+    'apps.cart',
+    'apps.order',
     'cloudinary',
     'whitenoise',
     'django_filters',

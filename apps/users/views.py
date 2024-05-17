@@ -13,7 +13,7 @@ class UserSignIn(generics.CreateAPIView):
     serializer_class = UserSignInSerializer
 
 
-class UserList(generics.ListAPIView):
+class UserList(CustomLoginRequiredMixin,generics.ListAPIView):
     #Get all Users
     queryset = UserModel.objects.all()
     serializer_class = UserSerializer
