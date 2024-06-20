@@ -4,7 +4,7 @@ from .models import CartModel
 class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartModel
-        fileds = '__all__'
+        fileds = ['items', 'quantity', 'user']
         deapth = 1
 
 class CartAddSerializer(serializers.ModelSerializer):
