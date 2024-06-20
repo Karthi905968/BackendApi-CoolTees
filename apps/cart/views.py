@@ -9,7 +9,8 @@ from .serializers import CartSerializer,CartAddSerializer
 
 class CartList(CustomLoginRequiredMixin,generics.ListAPIView):
     queryset = CartModel.objects.all()
-    serializer_class=CartSerializer
+    serializer_class=CartAddSerializer
+
 
     def get(self, request, *args, **kwargs):
         self.queryset = CartModel.objects.order_by('-created_at').filter(user=request.login_user)

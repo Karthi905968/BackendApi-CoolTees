@@ -17,7 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserSignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     token = serializers.CharField(read_only=True)
-    # token_expires_at = serializers.DateTimeField(read_only=True)
+    token_expires_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = UserModel
@@ -30,7 +30,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
         # Create a token
         validated_data['token'] = token_hex(16)
-        # validated_data['token_expires_at'] = datetime.datetime.now() + datetime.timedelta(days=7)
+        validated_data['token_expires_at'] = datetime.datetime.now() + datetime.timedelta(days=7)
 
         return super().create(validated_data)
 
@@ -40,7 +40,7 @@ class UserSignInSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     token = serializers.CharField(read_only=True)
-    # token_expires_at = serializers.DateTimeField(read_only=True)
+    token_expires_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = UserModel
@@ -55,7 +55,7 @@ class UserSignInSerializer(serializers.ModelSerializer):
             # Token
             user[0].token = token_hex(16)
             # Token expires after 7 days
-            # user[0].token_expires_at = datetime.datetime.now() + datetime.timedelta(days=7)
+            user[0].token_expires_at = datetime.datetime.now() + datetime.timedelta(days=7)
             user[0].save()
 
             # Return user information
