@@ -24,20 +24,36 @@ class CartAdd(CustomLoginRequiredMixin,generics.CreateAPIView):
         request.data['user']=request.login_user.id
         return super().post(request, *args, **kwargs)
 
-class CartDelete(CustomLoginRequiredMixin,generics.DestroyAPIView):
-    queryset=CartModel.objects.all()
-    serializer_class=CartSerializer
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.renderers import JSONRenderer
+from apps.cart.models import CartModel
+from apps.cart.serializers import CartSerializer
+from apps.common.mixins import CustomLoginRequiredMixin  # Assuming this is the correct import for your mixin
+
+class CartDelete(CustomLoginRequiredMixin, generics.DestroyAPIView):
+    queryset = CartModel.objects.all()
+    serializer_class = CartSerializer
 
     def delete(self, request, *args, **kwargs):
-        cart = CartModel.objects.get(pk=self.kwargs['pk'])
-
-        if cart.user.id != request.login_user.id:
-            response = Response({'error':'You can not delete the cartlist not owened by you'},status=status.HTTP_404_NOT_FOUND)
+        try:
+            cart = CartModel.objects.get(pk=self.kwargs['pk'])
+        except CartModel.DoesNotExist:
+            response = Response({'error': 'Cart item does not exist'}, status=status.HTTP_404_NOT_FOUND)
             response.accepted_renderer = JSONRenderer()
             response.accepted_media_type = 'application/json'
             response.renderer_context = {}
             return response
+
+        if cart.user.id != request.login_user.id:
+            response = Response({'error': 'You cannot delete the cart list not owned by you'}, status=status.HTTP_403_FORBIDDEN)
+            response.accepted_renderer = JSONRenderer()
+            response.accepted_media_type = 'application/json'
+            response.renderer_context = {}
+            return response
+
         return super().delete(request, *args, **kwargs)
+
     
 
 class CartUpdate(CustomLoginRequiredMixin,generics.UpdateAPIView):
