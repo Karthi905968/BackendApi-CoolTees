@@ -28,8 +28,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
 from apps.cart.models import CartModel
-from apps.cart.serializers import CartSerializer
-from apps.common.mixins import CustomLoginRequiredMixin  # Assuming this is the correct import for your mixin
+from apps.cart.serializers import CartSerializer # Assuming this is the correct import for your mixin
 
 class CartDelete(CustomLoginRequiredMixin, generics.DestroyAPIView):
     queryset = CartModel.objects.all()
@@ -56,24 +55,29 @@ class CartDelete(CustomLoginRequiredMixin, generics.DestroyAPIView):
 
     
 
-class CartUpdate(CustomLoginRequiredMixin,generics.UpdateAPIView):
-    queryset=CartModel.objects.all()
-    serializer_class=CartSerializer
+class CartUpdate(CustomLoginRequiredMixin, generics.UpdateAPIView):
+    queryset = CartModel.objects.all()
+    serializer_class = CartSerializer
 
     def update(self, request, *args, **kwargs):
-        cart = CartModel.objects.get(pk=self.kwargs['pk'])
+        try:
+            cart = CartModel.objects.get(pk=self.kwargs['pk'])
+        except CartModel.DoesNotExist:
+            response = Response({'error': 'Cart item does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            response.accepted_renderer = JSONRenderer()
+            response.accepted_media_type = 'application/json'
+            response.renderer_context = {}
+            return response
 
         if cart.user.id != request.login_user.id:
-            response = Response({'error':'You can not update the cart list not owened by you'},status=status.HTTP_404_NOT_FOUND)
-            response.accepted_renderer=JSONRenderer()
+            response = Response({'error': 'You cannot update the cart list not owned by you'}, status=status.HTTP_403_FORBIDDEN)
+            response.accepted_renderer = JSONRenderer()
             response.accepted_media_type = 'application/json'
-            response.renderer_context={}
+            response.renderer_context = {}
             return response
-        
-        cart.quantity = request.data['quantity']
+
+        cart.quantity = request.data.get('quantity', cart.quantity)
         cart.save()
-        serializer = CartSerializer([cart],many=True)
+        serializer = CartSerializer(cart)
 
-        return Response(serializer.data[0])
-    
-
+        return Response(serializer.data)
