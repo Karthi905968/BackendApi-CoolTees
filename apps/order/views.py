@@ -1,22 +1,25 @@
+from django.shortcuts import render
+from rest_framework import generics
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.renderers import JSONRenderer
-from rest_framework import generics
 from ..users.mixens import CustomLoginRequiredMixin
-from .models import Order,OrderItem
+from .models import OrderItem, Order
+from apps.cart.models import CartModel
 from .serializers import OrderSerializer
-from ..cart.models import CartModel
-from .forms import OrderForm,OrderItemForm
-from rest_framework import status
-# Create your views here.
+from django.core import serializers
+from .forms import OrderForm, OrderItemForm
+import json
 
-class OrderAdd(CustomLoginRequiredMixin,generics.CreateAPIView):
-    queryset=Order.objects.all()
-    serializer_class=OrderSerializer
+# Create your views here.
+class OrderAdd(CustomLoginRequiredMixin, generics.CreateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
 
     def get(self, request, *args, **kwargs):
         self.queryset = CartModel.objects.order_by('-created_at').filter(user=request.login_user)
         return self.list(request, *args, **kwargs)
-    
+
     def post(self, request, *args, **kwargs):
         # Save to order
         request.data["user"] = request.login_user.id
@@ -27,7 +30,7 @@ class OrderAdd(CustomLoginRequiredMixin,generics.CreateAPIView):
             response.accepted_media_type = "application/json"
             response.renderer_context = {}
             return response
-        
+
         order = order_form.save()
 
         # Get cart items of login user
@@ -35,12 +38,11 @@ class OrderAdd(CustomLoginRequiredMixin,generics.CreateAPIView):
 
         # Save to order items
         for cart in carts:
-            order_item_form = OrderItemForm({"order": order.id, "item":cart.item.id, "quantity":cart.quantity})
+            order_item_form = OrderItemForm({"order": order.id, "item":cart.items.id, "quantity":cart.quantity})
             order_item_form.save()
-
-         # Delete cart items
+        
+        # Delete cart items
         carts.delete()
             
         serializer = OrderSerializer([order], many=True)
-
-        return Response(serializer.data[0])
+        return Response('Success')
